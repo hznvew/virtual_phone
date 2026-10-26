@@ -3200,7 +3200,8 @@ APPS.baemin={cls:'bmapp',open(){if(NAV.stack[0].v==='main')NAV.stack[0].v='home'
 
 
 /* ---- 회차 (휴대폰) ---- */
-function phoneEP(){const q=+(new URLSearchParams(location.search).get('ep')||0);if(q)return q;if(!VIEWER)return Infinity;return +P.ep||Infinity}
+let LINK_EP=0;
+function phoneEP(){const q=+(new URLSearchParams(location.search).get('ep')||0)||LINK_EP;if(q)return q;if(!VIEWER)return Infinity;return +P.ep||Infinity}
 const epVis=x=>{if(!x)return false;const E=phoneEP(),e=+x.ep||0,u=+x.epEnd||0;return (!e||e<=E)&&(!u||E<u)};
 function igEpView(I){if(phoneEP()===Infinity)return I;const fc=p=>Array.isArray(p.cmts)&&p.cmts.some(c=>c.ep||c.epEnd)?{...p,cmts:p.cmts.filter(epVis)}:p;
  return {...I,posts:(I.posts||[]).filter(epVis).map(fc),stories:(I.stories||[]).filter(epVis),highlights:(I.highlights||[]).filter(epVis),dms:(I.dms||[]).filter(epVis).map(d=>(d.msgs||[]).some(m=>m.ep||m.epEnd)?{...d,msgs:d.msgs.filter(epVis)}:d)}}
@@ -3580,7 +3581,7 @@ async function initSB(){
    else sbPush()}
   else sbPush();
  }else{
-  let row=SLUG?data.find(r=>r.slug===SLUG):null;if(!row)row=data.find(r=>r.data&&r.data.isDefault)||data[0];
+  let row=SLUG?data.find(r=>r.slug===SLUG):null;if(!row&&SLUG){const m=SLUG.match(/^(.+?)-?(\d+)$/);if(m){row=data.find(r=>r.slug===m[1]);if(row)LINK_EP=+m[2]}}if(!row)row=data.find(r=>r.data&&r.data.isDefault)||data[0];
   if(row){const ph=fixPhone({...row.data,id:row.id,slug:row.slug});STORE.phones=[ph];STORE.current=ph.id;delete STORE.sample;P=ph;if(NAV)goHome();rerenderAll();if(P.lock&&P.lock.on&&!LOCKED)lockNow()}
   if(QS.has('admin'))sbLogin();
  }}
@@ -3588,6 +3589,7 @@ X.pubNow=()=>alertBox('자동으로 공개돼요','이 사이트에서는 저장
 X.phMore=id=>{const p=STORE.phones.find(x=>x.id===id);const link=location.origin+location.pathname+'?p='+encodeURIComponent(p.slug||p.id);
  actionSheet(p.owner,[
   {label:`링크 복사 (?p=${p.slug||p.id})`,fn:async()=>{try{await navigator.clipboard.writeText(link);toast('링크를 복사했어요')}catch(e){promptBox('이 인물의 링크','아래 주소를 길게 눌러 복사하세요',link)}}},
+  {label:'회차별 링크 복사 (예: ?p='+(p.slug||p.id)+'-2)',fn:async()=>{const n=await promptBox('몇 화까지 보이는 링크인가요?','숫자만 적어 주세요 (예: 2)','');if(n===null)return;const e=parseInt(n,10);if(!e){toast('숫자를 적어 주세요');return}const l=location.origin+location.pathname+'?p='+encodeURIComponent((p.slug||p.id)+'-'+e);try{await navigator.clipboard.writeText(l);toast(e+'화 링크를 복사했어요')}catch(_){promptBox(e+'화 링크','아래 주소를 길게 눌러 복사하세요',l)}}},
   {label:'링크 이름 바꾸기',fn:async()=>{const n=await promptBox('링크 이름','영어 소문자·숫자·- 만 쓸 수 있어요 (예: jiho)',p.slug||'');if(n===null)return;const v=n.trim().toLowerCase().replace(/[^a-z0-9-]/g,'');if(!v){toast('영어 소문자나 숫자로 적어 주세요');return}if(STORE.phones.some(x=>x!==p&&x.slug===v)){toast('이미 쓰는 이름이에요');return}p.slug=v;save();admRender()}},
   {label:`보여 줄 회차 (${p.ep?p.ep+'화까지':'전부'})`,fn:()=>{sheetForm({title:p.owner+' 폰의 회차',fields:[{k:'ep',label:'회차 (이 회차까지의 내용이 보여요 · 비우면 전부)',type:'number'}],data:{ep:p.ep||''},onSave:d=>{p.ep=d.ep}})}},
   {label:'기본 인물로 지정 (링크에 이름이 없을 때 보일 폰)',fn:()=>{STORE.phones.forEach(x=>x.isDefault=x===p);save();toast('기본 인물로 정했어요')}},
