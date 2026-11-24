@@ -1417,13 +1417,14 @@ button.adl{color:#ff9500;font-weight:700}
 /* sms */
 .msgs{padding:4px 18px 14px;display:flex;flex-direction:column}
 .stamp{text-align:center;font-size:11.5px;color:var(--ink2);margin:14px 0 6px;font-weight:500}
-.bub{max-width:74%;padding:8px 14px;border-radius:20px;font-size:17px;line-height:1.3;margin-top:10px;word-break:break-word;white-space:pre-wrap;position:relative}
+.bub{max-width:74%;padding:8px 14px;border-radius:20px;font-size:17px;line-height:1.3;margin-top:4px;word-break:break-word;white-space:pre-wrap;position:relative}
 .bub.me{align-self:flex-end;background:var(--blue);color:#fff}
 .bub.them{align-self:flex-start;background:#e9e9eb;color:#000}
 #phone.dark .bub.them{background:#26252a;color:#fff}
 .bub.img{padding:0;background:none!important;overflow:hidden;border-radius:16px;max-width:66%}
 .bub.img img,.bub.img video{display:block;width:100%;border-radius:16px}
 .bub.gap{margin-top:10px}
+.bub.me:has(+ .bub.me)::before,.bub.me:has(+ .bub.me)::after,.bub.them:has(+ .bub.them)::before,.bub.them:has(+ .bub.them)::after{display:none}
 .bub.me.grn{background:#6ccf6f}
 .send.grn{background:#6ccf6f}
 .bub.me:not(.img)::before,.bub.them:not(.img)::before{content:"";position:absolute;bottom:0;width:20px;height:20px;background:inherit}
@@ -2233,7 +2234,7 @@ function msgMoveExtra(fnName,a,b){return `<div class="grp"><button class="row" o
 X.smsMsg=(tid,mid)=>{const t=byId(P.sms,tid);const m=byId(t.msgs,mid);if(!ED()){if(m.media&&(m.type==='image'||m.type==='video'))openViewer([m.media],0);return}
  sheetForm({title:'메시지 편집',fields:msgFields([['me','나'],['them',smsName(t)]]),data:m,extra:msgMoveExtra('X.smsMove',tid,mid),onSave:d=>{Object.assign(m,d)},onDelete:()=>t.msgs.splice(t.msgs.indexOf(m),1)})};
 X.smsMove=(tid,mid,d)=>{const t=byId(P.sms,tid);move(t.msgs,t.msgs.findIndex(m=>m.id===mid),d)};
-X.smsThreadEdit=tid=>{const t=byId(P.sms,tid);sheetForm({title:'대화방 설정',fields:[{k:'contactId',label:'연결된 연락처 (이름·사진이 연락처를 따라감)',type:'select',opts:()=>contactOpts()},{k:'name',label:'이름 (연락처가 없을 때)'},{k:'number',label:'번호'},{k:'photo',label:'사진 (연락처가 없을 때)',type:'media',accept:'image/*'},{k:'color',label:'보낸 말풍선 색',type:'select',opts:[['blue','파랑 (iMessage)'],['green','초록 (문자 · RCS)']]},{k:'readLabel',label:'마지막 보낸 메시지 아래 문구',ph:'읽음 / 전송됨 / 비워두면 숨김'},{k:'unread',label:'안 읽은 표시',type:'check'}],data:t,extra:`<div class="grp"><button class="row" onclick="X.smsSort('${tid}');closeLayer(this)"><div class="bd" style="color:var(--blue)">메시지를 시간순으로 정렬</div></button></div>`,onSave:d=>Object.assign(t,d),onDelete:()=>{P.sms.splice(P.sms.indexOf(t),1);back()}})};
+X.smsThreadEdit=tid=>{const t=byId(P.sms,tid);sheetForm({title:'대화방 설정',fields:[{k:'contactId',label:'연결된 연락처 (이름·사진이 연락처를 따라감)',type:'select',opts:()=>contactOpts()},{k:'name',label:'이름 (연락처가 없을 때)'},{k:'number',label:'번호'},{k:'photo',label:'사진 (연락처가 없을 때)',type:'media',accept:'image/*'},{k:'color',label:'보낸 말풍선 색',type:'select',opts:[['blue','파랑 (iMessage)'],['green','초록 (문자 · RCS)']]},{k:'hideRead',label:'읽음 표시 숨기기',type:'check'},{k:'readLabel',label:'마지막 보낸 메시지 아래 문구',ph:'읽음 / 전송됨'},{k:'unread',label:'안 읽은 표시',type:'check'}],data:t,extra:`<div class="grp"><button class="row" onclick="X.smsSort('${tid}');closeLayer(this)"><div class="bd" style="color:var(--blue)">메시지를 시간순으로 정렬</div></button></div>`,onSave:d=>Object.assign(t,d),onDelete:()=>{P.sms.splice(P.sms.indexOf(t),1);back()}})};
 X.smsSort=tid=>{const t=byId(P.sms,tid);t.msgs=sortByDate(t.msgs);save();refresh();toast('시간순으로 정렬했어요')};
 X.who=()=>{const A=APPS[NAV.app];A.who=A.who==='me'?'them':'me';refresh()};
 X.smsSend=tid=>{const t=byId(P.sms,tid);const ta=$('#smsin');const v=ta.value.trim();if(!v)return;const A=APPS.messages;t.msgs.push({id:uid(),from:ED()?A.who:'me',type:'text',text:v,date:nowS()});ta.value='';save();render('',false)};
@@ -2244,7 +2245,7 @@ function smsBubbles(t){let out='',prev=null;const n=t.msgs.length;
   const cls=`bub ${m.from==='me'?'me':'them'} ${(m.type==='image'||m.type==='video')&&m.media?'img':''} ${!gap&&prev&&prev.from!==m.from?'gap':''} ${t.color==='green'?'grn':''}`;
   let inner=esc(m.text);if((m.type==='image'||m.type==='video')&&m.media)inner=mediaTag(m.media,m.type==='video'?'controls':'');else if(m.type==='voice')inner=`<span class="voice"><span style="font-size:14px">▶</span><span class="wv"></span><span style="font-size:13px">${esc(m.text||'0:05')}</span></span>`;
   out+=`<div class="${cls}" onclick="X.smsMsg('${t.id}','${m.id}')">${inner}</div>`;prev=m});
- const lm=lastMsg(t);if(lm&&lm.from==='me'&&t.readLabel!=='')out+=`<div class="readm">${esc(t.readLabel??'읽음')}</div>`;return out}
+ const lm=lastMsg(t);if(lm&&lm.from==='me'&&t.readLabel!==''&&!t.hideRead)out+=`<div class="readm">${esc(t.readLabel??'읽음')}</div>`;return out}
 APPS.messages={who:'me',q:'',views:{
  main(){const ts=P.sms.slice().sort((a,b)=>String(lastMsg(b)?.date||'').localeCompare(lastMsg(a)?.date||''));
   return topPad+`<div class="nav"><button class="pill ${ED()?'ebtn':''}" onclick="X.setEdit()">${ED()?'편집 끄기':'편집'}</button><div class="navr"><button class="nb" onclick="${VIEWER?'':'X.smsNew()'}">${G.compose}</button></div></div><div class="scroll"><div class="large">메시지</div>${sbar('검색','mq','',"X.filt(this,'.smsrow')")}<div class="list">${ts.map(t=>{const m=lastMsg(t);return `<button class="row smsrow" data-s="${esc(smsName(t)+' '+t.msgs.map(m=>m.text||'').join(' '))}" onclick="X.openThread('${t.id}')" style="padding-left:6px">${t.unread?'<i style="width:10px;height:10px;border-radius:50%;background:var(--blue);flex-shrink:0"></i>':'<i style="width:10px;flex-shrink:0"></i>'}${avatar(smsPhoto(t),smsName(t),46)}<div class="bd"><div style="display:flex;justify-content:space-between;gap:8px"><span class="t1" style="font-weight:600">${esc(smsName(t))}</span><span class="t2" style="flex-shrink:0;font-size:14px">${esc(listDate(m?.date))} ›</span></div><div class="t2" style="white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">${esc(preview(m))}</div></div></button>`}).join('')||'<div class="empty">메시지가 없습니다.</div>'}</div></div>`},
@@ -3360,7 +3361,7 @@ APPS.settings={views:{
 }};
 /* ================= 관리자 모드 ================= */
 const fmtDT=s=>s?`${ymd(s)} ${hm(s)}`:'';
-const smsThreadFields=[{k:'contactId',label:'연결된 연락처',type:'select',opts:()=>contactOpts()},{k:'name',label:'이름 (연락처가 없을 때)'},{k:'number',label:'번호'},{k:'photo',label:'사진 (연락처가 없을 때)',type:'media',accept:'image/*'},{k:'readLabel',label:'마지막 보낸 메시지 아래 문구',ph:'읽음'},{k:'unread',label:'안 읽은 표시',type:'check'}];
+const smsThreadFields=[{k:'contactId',label:'연결된 연락처',type:'select',opts:()=>contactOpts()},{k:'name',label:'이름 (연락처가 없을 때)'},{k:'number',label:'번호'},{k:'photo',label:'사진 (연락처가 없을 때)',type:'media',accept:'image/*'},{k:'hideRead',label:'읽음 표시 숨기기',type:'check'},{k:'readLabel',label:'마지막 보낸 메시지 아래 문구',ph:'읽음'},{k:'unread',label:'안 읽은 표시',type:'check'}];
 const noteFields=[{k:'body',label:'내용 (첫 줄이 제목)',type:'textarea',rows:8},{k:'created',label:'만든 날짜',type:'datetime'},{k:'updated',label:'수정한 날짜 (목록에 표시)',type:'datetime'},{k:'folder',label:'폴더',ph:'메모'},{k:'pinned',label:'고정',type:'check'},{k:'imgs',label:'첨부 사진',type:'medias'}];
 const tkSenders=r=>[['me','나'],...r.members.map(id=>[id,cnm(id)])];
 function COLS(){return [
